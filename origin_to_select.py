@@ -45,7 +45,6 @@ class OriginToSelect(bpy.types.Operator):
                 ctx = bpy.context.copy()
                 ctx['area'] = area
                 ctx['region'] = area.regions[-1]
-                bpy.ops.view3d.view_selected(ctx)
                 bpy.ops.view3d.snap_cursor_to_selected(ctx)
                 
                 bpy.ops.object.mode_set(mode='OBJECT')
@@ -54,7 +53,11 @@ class OriginToSelect(bpy.types.Operator):
                 
                 bpy.context.scene.cursor_location = cursor3d_location
                 
+                bpy.ops.object.mode_set(mode='EDIT')
+                
                 break
+        
+        return {'FINISHED'}
 
 
 def menu_func(self, context):
