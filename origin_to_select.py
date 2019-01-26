@@ -18,6 +18,12 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
+#
+# Custom Set Origin idea belongs to Shane Ambler
+# https://gist.github.com/sambler
+# sambler/set_origin.py
+# https://gist.github.com/sambler/d3c7f40854f1c2ecb510a49bebcb1ece
+#
 
 
 bl_info = {
@@ -61,34 +67,75 @@ class OriginToSelect(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class CustomSetOriginOperator(bpy.types.Operator):
+    bl_idname = 'object.custom_set_origin'
+    bl_label = 'Custom set origin operator'
+
+    centre = bpy.props.StringProperty(default='')
+
+    def execute(self, context):
+        if self.centre == 'ORIGIN_TO_SELECT':
+            OriginToSelect.execute(self, context)
+        else:
+            return bpy.ops.object.origin_set(type=self.centre)
+        return {'FINISHED'}
+
+
+class CustomSetOriginMenu(bpy.types.Menu):
+    bl_idname = "OBJECT_MT_custom_set_origin"
+    bl_label = "Custom set origin"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.operator(CustomSetOriginOperator.bl_idname, text='Geometry to Origin').centre = 'GEOMETRY_ORIGIN'
+        layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to Geometry').centre = 'ORIGIN_GEOMETRY'
+        layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to 3D Cursor').centre = 'ORIGIN_CURSOR'
+        layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to Center of Mass (Surface)').centre = 'ORIGIN_CENTER_OF_MASS'
+        layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to Center of Mass (Volume)').centre = 'ORIGIN_CENTER_OF_VOLUME'
+        layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to select (Face/Edge/Vertex)').centre = 'ORIGIN_TO_SELECT'
+
+
 def menu_func(self, context):
-    self.layout.operator(OriginToSelect.bl_idname, icon="PLUGIN")
-
-
-addon_keymaps = []
+    self.layout.operator(OriginToSelect.bl_idname)
 
 
 def register():
     bpy.utils.register_class(OriginToSelect)
+    bpy.utils.register_class(CustomSetOriginOperator)
+    bpy.utils.register_class(CustomSetOriginMenu)
     
     bpy.types.VIEW3D_MT_edit_mesh.append(menu_func)
-    #bpy.types.VIEW3D_MT_set_origin.append(menu_func)
     
     wm = bpy.context.window_manager
-    kc = wm.keyconfigs.addon
-    if kc:
-        km = wm.keyconfigs.addon.keymaps.new(name='Edit Mode', space_type='VIEW_3D')
-        kmi = km.keymap_items.new(OriginToSelect.bl_idname, 'SPACE', 'PRESS', shift=True, ctrl=True, alt=True)
-        addon_keymaps.append((km, kmi))
+    win_keymaps = wm.keyconfigs.user.keymaps.get('Object Non-modal')
+    if win_keymaps:
+        # disable standard set origin keymap
+        for kmi in win_keymaps.keymap_items:
+            if kmi.idname == 'object.origin_set':
+                kmi.active = False
+                break
+        
+        # add a keymap for our set origin operator
+        kmi = win_keymaps.keymap_items.new('wm.call_menu', 'C', 'PRESS', ctrl=True, alt=True, shift=True)
+        setattr(kmi.properties, 'name', CustomSetOriginMenu.bl_idname)
 
 
 def unregister():
-    for km, kmi in addon_keymaps:
-        km.keymap_items.remove(kmi)
-    addon_keymaps.clear()
+    wm = bpy.context.window_manager
+    win_keymaps = wm.keyconfigs.user.keymaps.get('Object Non-modal')
+    if win_keymaps:
+        for kmi in win_keymaps.keymap_items:
+            # re-enable standard set origin
+            if kmi.idname == 'object.origin_set':
+                kmi.active = True
+            # remove our custom set origin
+            if kmi.idname == 'wm.call_menu' and getattr(kmi.properties, 'name') == CustomSetOriginMenu.bl_idname:
+                win_keymaps.keymap_items.remove(kmi)
     
     bpy.types.VIEW3D_MT_edit_mesh.remove(menu_func)
     
+    bpy.utils.unregister_class(CustomSetOriginMenu)
+    bpy.utils.unregister_class(CustomSetOriginOperator)
     bpy.utils.unregister_class(OriginToSelect)
 
 
