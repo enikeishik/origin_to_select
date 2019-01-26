@@ -25,6 +25,7 @@ bl_info = {
     "description": "Moves origin of selected object into selected part (v/e/f) of object",
     "author": "enikeishik",
     "category": "Mesh",
+    "location": "VIEW3D > Edit Mode > Mesh > Move origin to select",
 }
 
 
@@ -61,15 +62,33 @@ class OriginToSelect(bpy.types.Operator):
 
 
 def menu_func(self, context):
-    self.layout.operator(OriginToSelect.bl_idname)
+    self.layout.operator(OriginToSelect.bl_idname, icon="PLUGIN")
+
+
+addon_keymaps = []
 
 
 def register():
     bpy.utils.register_class(OriginToSelect)
+    
     bpy.types.VIEW3D_MT_edit_mesh.append(menu_func)
+    #bpy.types.VIEW3D_MT_set_origin.append(menu_func)
+    
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
+    if kc:
+        km = wm.keyconfigs.addon.keymaps.new(name='Edit Mode', space_type='VIEW_3D')
+        kmi = km.keymap_items.new(OriginToSelect.bl_idname, 'SPACE', 'PRESS', shift=True, ctrl=True, alt=True)
+        addon_keymaps.append((km, kmi))
 
 
 def unregister():
+    for km, kmi in addon_keymaps:
+        km.keymap_items.remove(kmi)
+    addon_keymaps.clear()
+    
+    bpy.types.VIEW3D_MT_edit_mesh.remove(menu_func)
+    
     bpy.utils.unregister_class(OriginToSelect)
 
 
