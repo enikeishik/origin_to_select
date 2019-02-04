@@ -30,6 +30,7 @@ bl_info = {
     "name": "Origin to select",
     "description": "Moves origin of selected object into selected part (v/e/f) of object",
     "author": "enikeishik",
+    "blender": (2, 80, 0),
     "category": "Mesh",
     "location": "VIEW3D > Edit Mode > Mesh > Move origin to select",
 }
@@ -87,12 +88,12 @@ class CustomSetOriginMenu(bpy.types.Menu):
     
     def draw(self, context):
         layout = self.layout
+        layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to select (Face/Edge/Vertex)').centre = 'ORIGIN_TO_SELECT'
         layout.operator(CustomSetOriginOperator.bl_idname, text='Geometry to Origin').centre = 'GEOMETRY_ORIGIN'
         layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to Geometry').centre = 'ORIGIN_GEOMETRY'
         layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to 3D Cursor').centre = 'ORIGIN_CURSOR'
         layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to Center of Mass (Surface)').centre = 'ORIGIN_CENTER_OF_MASS'
         layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to Center of Mass (Volume)').centre = 'ORIGIN_CENTER_OF_VOLUME'
-        layout.operator(CustomSetOriginOperator.bl_idname, text='Origin to select (Face/Edge/Vertex)').centre = 'ORIGIN_TO_SELECT'
 
 
 def menu_func(self, context):
